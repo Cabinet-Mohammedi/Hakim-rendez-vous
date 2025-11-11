@@ -1,4 +1,11 @@
-﻿import { ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+document.addEventListener("DOMContentLoaded", () => {
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  const btnReserve = document.getElementById("btnReserve");
+  const nomInput = document.getElementById("nom");
+  const telInput = document.getElementById("tel");
+import { ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 import { db } from "./firebase-config.js";
 
 const btnReserve = document.getElementById("btnReserve");
@@ -21,3 +28,4 @@ btnReserve.addEventListener("click", () => {
   document.getElementById("nomPatient").value="";
   document.getElementById("telPatient").value="";
 });
+
