@@ -1,7 +1,12 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // === Sélection des éléments ===
+  // === Sélection des éléments HTML ===
   const btnLogin = document.getElementById("btnLogin");
-  const mdpInput = document.getElementById("mdpMedecin");
+  
+  // *** يجب التأكد من وجود هذه العناصر في ملف HTML الخاص بك ***
+  const emailInput = document.getElementById("emailMedecin"); // حقل إدخال البريد الإلكتروني
+  const mdpInput = document.getElementById("mdpMedecin");       // حقل إدخال كلمة المرور
+  // --------------------------------------------------------
+  
   const loginCard = document.getElementById("loginCard");
   const medContent = document.getElementById("medContent");
   const loginError = document.getElementById("loginError");
@@ -13,29 +18,55 @@ document.addEventListener("DOMContentLoaded", () => {
   const remainingSpan = document.getElementById("remaining");
 
   // === Initialisation Firebase ===
+  // *** تأكد من أن firebaseConfig صحيح ومحدث ***
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  const auth = firebase.auth(); // جلب خدمة المصادقة
 
-  // === Vérifier si mot de passe déjà sauvegardé ===
-  if (localStorage.getItem("mdpMedecin") === "docteur123") {
-    loginCard.style.display = "none";
-    medContent.style.display = "block";
-    afficherRendezVous();
-  }
-
-  // === Connexion médecin ===
-  btnLogin.addEventListener("click", () => {
-    if (mdpInput.value.trim() === "docteur123") {
-      localStorage.setItem("mdpMedecin", "docteur123");
+  // === 1. التحقق من حالة المصادقة عند تحميل الصفحة ===
+  // هذا يحدد ما إذا كان يجب عرض شاشة تسجيل الدخول أو المحتوى
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      // المستخدم مسجل الدخول بنجاح
       loginCard.style.display = "none";
       medContent.style.display = "block";
       afficherRendezVous();
     } else {
-      loginError.textContent = "Mot de passe incorrect !";
+      // المستخدم غير مسجل الدخول
+      loginCard.style.display = "block";
+      medContent.style.display = "none";
     }
   });
 
-  // === Ajouter un rendez-vous ===
+  // === 2. Connexion médecin (تسجيل الدخول) ===
+  btnLogin.addEventListener("click", () => {
+    const email = emailInput.value.trim();
+    const password = mdpInput.value.trim();
+
+    if (!email || !password) {
+        loginError.textContent = "الرجاء إدخال البريد الإلكتروني وكلمة المرور.";
+        return;
+    }
+
+    // استخدام وظيفة Firebase للمصادقة الآمنة (لا توجد كلمة مرور في الكود)
+    auth.signInWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        // تسجيل الدخول ناجح. onAuthStateChanged يتولى التبديل
+        loginError.textContent = ""; 
+      })
+      .catch((error) => {
+        // فشل تسجيل الدخول
+        console.error("Login Error:", error.code, error.message);
+        
+        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+             loginError.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+        } else {
+             loginError.textContent = "حدث خطأ أثناء تسجيل الدخول. حاول مجددًا.";
+        }
+      });
+  });
+
+  // === 3. Ajouter un rendez-vous ===
   btnAdd.addEventListener("click", () => {
     const nom = nomAdd.value.trim();
     const tel = telAdd.value.trim();
@@ -57,7 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // === Afficher les rendez-vous ===
+  // === 4. Afficher les rendez-vous ===
   function afficherRendezVous() {
     const ref = db.ref("rendezvous");
     ref.on("value", snapshot => {
@@ -88,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       remainingSpan.textContent = remaining;
 
-      // === Bouton toggle "tem découverte" ===
+      // === Bouton toggle "tem découverte" ===
       document.querySelectorAll(".btn-check").forEach(btn => {
         btn.addEventListener("click", e => {
           const id = e.currentTarget.getAttribute("data-id");
