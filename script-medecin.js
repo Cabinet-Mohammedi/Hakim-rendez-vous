@@ -176,4 +176,70 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ref = db.ref("rendezvous");
     ref.once("value").then(snapshot => {
-      const numero = snapshot.numChildren() + 1
+      const numero = snapshot.numChildren() + 1;
+      ref.push({
+        nom,
+        tel,
+        numero,
+        date: new Date().toLocaleDateString("fr-FR"),
+        checked: false
+      });
+      nomAdd.value = "";
+      telAdd.value = "";
+    });
+  });
+
+  // === 7. Afficher les rendez-vous ===
+  function afficherRendezVous() {
+    const ref = db.ref("rendezvous");
+    ref.on("value", snapshot => {
+      rdvTable.innerHTML = "";
+      let remaining = 0;
+
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (!data.checked) remaining++;
+
+        const tr = document.createElement("tr");
+        tr.style.background = data.checked ? "#f28b82" : "white";
+
+        tr.innerHTML = `
+          <td>${data.numero}</td>
+          <td>${data.nom}</td>
+          <td>${data.tel}</td>
+          <td>${data.date}</td>
+          <td>
+            <button class="btn-check" data-id="${child.key}" style="background:green; color:white; margin-right:5px;">
+              ✅
+            </button>
+            <button class="btn-delete" data-id="${child.key}" style="background:red; color:white;">🗑️</button>
+          </td>
+        `;
+        rdvTable.appendChild(tr);
+      });
+
+      remainingSpan.textContent = remaining;
+
+      // === Bouton toggle "tem découverte" ===
+      document.querySelectorAll(".btn-check").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const id = e.currentTarget.getAttribute("data-id");
+          const refPatient = db.ref("rendezvous/" + id);
+
+          refPatient.once("value").then(snap => {
+            const current = snap.val().checked;
+            refPatient.update({ checked: !current }); 
+          });
+        });
+      });
+
+      // === Bouton supprimer ===
+      document.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const id = e.currentTarget.getAttribute("data-id");
+          db.ref("rendezvous/" + id).remove();
+        });
+      });
+    });
+  }
+});
