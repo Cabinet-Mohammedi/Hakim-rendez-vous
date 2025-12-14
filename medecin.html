@@ -35,40 +35,28 @@
 
 <main>
   <div id="loginCard" class="card">
-    <h2>تسجيل الدخول</h2>
+    <h2>Connexion:</h2>
     
-    <label>البريد الإلكتروني:</label>
+    <label>Email:</label>
     <input type="email" id="emailMedecin" placeholder="Ex: docteur@cabinet.com" required>
     
-    <label>كلمة المرور:</label>
+    <label>Mot de passe:</label>
     <input type="password" id="mdpMedecin" placeholder="Mot de passe" required>
     
     <button id="btnLogin"><i class="fas fa-sign-in-alt"></i> Entrer</button>
     <p id="loginError" style="color:#c00; margin-top: 10px;"></p>
 
     <div class="login-links">
-        <a href="#" id="forgotPasswordLink">هل نسيت كلمة السر؟</a>
-        <a href="#" id="changePasswordLink">تغيير كلمة السر</a>
+        <a href="#" id="forgotPasswordLink">Vous avez oublié votre mot de passe?/a>
     </div>
 
     <hr style="margin-top: 20px;">
-    <button id="showSignupBtn" style="background:#28a745; color:white;">إنشاء حساب جديد للطبيب</button>
-  </div>
-  
-  <div id="signupCard" class="card" style="display: none;">
-      <h2>تسجيل طبيب جديد</h2>
-      <input type="email" id="newEmail" placeholder="بريد إلكتروني للحساب الجديد" required>
-      <input type="password" id="newPassword" placeholder="كلمة مرور (6 أحرف على الأقل)" required>
-      <button id="btnSignup" style="background:#28a745; color:white;"><i class="fas fa-user-plus"></i> تسجيل الحساب</button>
-      <p id="signupError" style="color:#c00; margin-top: 10px;"></p>
-      
-      <hr style="margin-top: 20px;">
-      <button id="showLoginBtn" style="background:#007BFF; color:white;">العودة لتسجيل الدخول</button>
+      <button id="showLoginBtn" style="background:#007BFF; color:white;">Retour pour se connecter</button>
   </div>
 
   <div id="medContent" style="display:none;">
     <div class="card">
-      <button id="btnLogout" style="float: right;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+      <button id="btnLogout" style="float: right;"><i class="fas fa-sign-out-alt"></i>Se déconnecter</button>
       <h3>Ajouter un rendez-vous</h3>
       <input type="text" id="nomAdd" placeholder="Nom et prénom">
       <input type="tel" id="telAdd" placeholder="Téléphone">
@@ -105,3 +93,4 @@
 
 </body>
 </html>
+
