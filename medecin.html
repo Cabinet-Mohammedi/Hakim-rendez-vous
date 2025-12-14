@@ -15,7 +15,7 @@
     button { padding:8px 12px; font-size:1em; cursor:pointer; border:none; border-radius:5px; margin:2px; }
     .btn-check { background:green; color:white; }
     .btn-delete { background:red; color:white; }
-    #btnLogout { background:#FF5733; color:white; } /* تصميم زر تسجيل الخروج */
+    #btnLogout { background:#FF5733; color:white; }
     table { width:100%; border-collapse:collapse; margin-top:10px; }
     th, td { padding:8px; border:1px solid #ccc; text-align:center; }
     tr.checked { background:red; color:white; }
@@ -50,6 +50,20 @@
         <a href="#" id="forgotPasswordLink">هل نسيت كلمة السر؟</a>
         <a href="#" id="changePasswordLink">تغيير كلمة السر</a>
     </div>
+
+    <hr style="margin-top: 20px;">
+    <button id="showSignupBtn" style="background:#28a745; color:white;">إنشاء حساب جديد للطبيب</button>
+  </div>
+  
+  <div id="signupCard" class="card" style="display: none;">
+      <h2>تسجيل طبيب جديد</h2>
+      <input type="email" id="newEmail" placeholder="بريد إلكتروني للحساب الجديد" required>
+      <input type="password" id="newPassword" placeholder="كلمة مرور (6 أحرف على الأقل)" required>
+      <button id="btnSignup" style="background:#28a745; color:white;"><i class="fas fa-user-plus"></i> تسجيل الحساب</button>
+      <p id="signupError" style="color:#c00; margin-top: 10px;"></p>
+      
+      <hr style="margin-top: 20px;">
+      <button id="showLoginBtn" style="background:#007BFF; color:white;">العودة لتسجيل الدخول</button>
   </div>
 
   <div id="medContent" style="display:none;">
@@ -83,7 +97,8 @@
 <footer><a href="index.html">? Retour</a></footer>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-auth-compat.js"></script> <script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.3/firebase-database-compat.js"></script>
 
 <script src="firebase-config.js"></script>
 <script src="script-medecin.js"></script>
