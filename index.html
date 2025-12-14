@@ -1,45 +1,113 @@
-﻿<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cabinet Mohammedi Hakim - Réservation</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-</head>
-<body>
+document.addEventListener("DOMContentLoaded", () => {
+  // === Sélection des éléments ===
+  const btnLogin = document.getElementById("btnLogin");
+  const mdpInput = document.getElementById("mdpMedecin");
+  const loginCard = document.getElementById("loginCard");
+  const medContent = document.getElementById("medContent");
+  const loginError = document.getElementById("loginError");
 
-<header>
-  Cabinet Mohammedi Hakim
-</header>
+  const nomAdd = document.getElementById("nomAdd");
+  const telAdd = document.getElementById("telAdd");
+  const btnAdd = document.getElementById("btnAdd");
+  const rdvTable = document.getElementById("rdvTable").querySelector("tbody");
+  const remainingSpan = document.getElementById("remaining");
 
-<main>
-  <div class="card form-card">
-    <h3>Réserver un rendez-vous</h3>
-    <label>Nom :</label>
-    <input type="text" id="nomPatient" placeholder="Votre nom">
-    <label>Téléphone :</label>
-    <input type="tel" id="telPatient" placeholder="Votre numéro">
-    <button id="btnReserve"><i class="fas fa-calendar-plus"></i> Réserver</button>
-    <p id="infoReservation" style="margin-top:10px;color:#007bff;"></p>
-  </div>
+  // === Initialisation Firebase ===
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  <div class="card">
-    <h3>Contact</h3>
-    <button onclick="window.location.href='tel:0772812293'"><i class="fas fa-phone"></i> Contacter Le Médecin</button>
-  </div>
+  // === Vérifier si mot de passe déjà sauvegardé ===
+  if (localStorage.getItem("mdpMedecin") === "docteur123") {
+    loginCard.style.display = "none";
+    medContent.style.display = "block";
+    afficherRendezVous();
+  }
 
-  <div class="card">
-    <button onclick="window.location.href='medecin.html'"><i class="fas fa-user-md"></i> Espace Médecin</button>
-  </div>
-</main>
+  // === Connexion médecin ===
+  btnLogin.addEventListener("click", () => {
+    if (mdpInput.value.trim() === "docteur123") {
+      localStorage.setItem("mdpMedecin", "docteur123");
+      loginCard.style.display = "none";
+      medContent.style.display = "block";
+      afficherRendezVous();
+    } else {
+      loginError.textContent = "Mot de passe incorrect !";
+    }
+  });
 
-<footer>
-  Cabinet Mohammedi Hakim
-</footer>
+  // === Ajouter un rendez-vous ===
+  btnAdd.addEventListener("click", () => {
+    const nom = nomAdd.value.trim();
+    const tel = telAdd.value.trim();
 
-<script type="module" src="firebase-config.js"></script>
-<script type="module" src="script-patient.js"></script>
+    if (!nom || !tel) { alert("Veuillez remplir tous les champs !"); return; }
 
-</body>
-</html>
+    const ref = db.ref("rendezvous");
+    ref.once("value").then(snapshot => {
+      const numero = snapshot.numChildren() + 1;
+      ref.push({
+        nom,
+        tel,
+        numero,
+        date: new Date().toLocaleDateString("fr-FR"),
+        checked: false
+      });
+      nomAdd.value = "";
+      telAdd.value = "";
+    });
+  });
+
+  // === Afficher les rendez-vous ===
+  function afficherRendezVous() {
+    const ref = db.ref("rendezvous");
+    ref.on("value", snapshot => {
+      rdvTable.innerHTML = "";
+      let remaining = 0;
+
+      snapshot.forEach(child => {
+        const data = child.val();
+        if (!data.checked) remaining++;
+
+        const tr = document.createElement("tr");
+        tr.style.background = data.checked ? "#f28b82" : "white"; // أحمر فاتح عند تم الكشف
+
+        tr.innerHTML = `
+          <td>${data.numero}</td>
+          <td>${data.nom}</td>
+          <td>${data.tel}</td>
+          <td>${data.date}</td>
+          <td>
+            <button class="btn-check" data-id="${child.key}" style="background:green; color:white; margin-right:5px;">
+              ✅
+            </button>
+            <button class="btn-delete" data-id="${child.key}" style="background:red; color:white;">🗑️</button>
+          </td>
+        `;
+        rdvTable.appendChild(tr);
+      });
+
+      remainingSpan.textContent = remaining;
+
+      // === Bouton toggle "tem découverte" ===
+      document.querySelectorAll(".btn-check").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const id = e.currentTarget.getAttribute("data-id");
+          const refPatient = db.ref("rendezvous/" + id);
+
+          refPatient.once("value").then(snap => {
+            const current = snap.val().checked;
+            refPatient.update({ checked: !current }); // تبديل بين true و false
+          });
+        });
+      });
+
+      // === Bouton supprimer ===
+      document.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const id = e.currentTarget.getAttribute("data-id");
+          db.ref("rendezvous/" + id).remove();
+        });
+      });
+    });
+  }
+});
