@@ -1,7 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
   // === Configuration Firebase ===
   // firebase-config.js
-// Configuration Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDaituJimoLNpkMYvr1u4KJC8XEJgbrGZA",
   authDomain: "clinique-9f351.firebaseapp.com",
@@ -62,4 +61,5 @@ const firebaseConfig = {
     });
   });
 });
+
 
