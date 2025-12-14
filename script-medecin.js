@@ -31,25 +31,27 @@ document.addEventListener("DOMContentLoaded", () => {
   const remainingSpan = document.getElementById("remaining");
 
   // === Initialisation Firebase ===
+  // يجب أن يكون firebaseConfig متاحًا كمتغير عام من ملف firebase-config.js
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth(); 
 
   // === 1. وظائف التبديل بين الشاشات ===
-  showSignupBtn.addEventListener("click", () => {
-      loginCard.style.display = "none";
-      signupCard.style.display = "block";
-      loginError.textContent = "";
-  });
+  if (showSignupBtn && showLoginBtn) {
+    showSignupBtn.addEventListener("click", () => {
+        loginCard.style.display = "none";
+        signupCard.style.display = "block";
+        loginError.textContent = "";
+    });
 
-  showLoginBtn.addEventListener("click", () => {
-      signupCard.style.display = "none";
-      loginCard.style.display = "block";
-      signupError.textContent = "";
-  });
+    showLoginBtn.addEventListener("click", () => {
+        signupCard.style.display = "none";
+        loginCard.style.display = "block";
+        signupError.textContent = "";
+    });
+  }
 
-
-  // === 2. التحقق من حالة المصادقة عند تحميل الصفحة ===
+  // === 2. التحقق من حالة المصادقة عند تحميل الصفحة (Firebase Auth) ===
   auth.onAuthStateChanged((user) => {
     if (user) {
       // المستخدم مسجل الدخول
@@ -66,7 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // === 3. Connexion médecin (تسجيل الدخول) ===
+  // === 3. Connexion médecin (تسجيل الدخول الآمن) ===
   btnLogin.addEventListener("click", () => {
     const email = emailInput.value.trim();
     const password = mdpInput.value.trim();
@@ -76,6 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    // لا توجد كلمة سر مكتوبة بشكل صريح في الكود
     auth.signInWithEmailAndPassword(email, password)
       .then((userCredential) => {
         loginError.textContent = ""; 
@@ -118,46 +121,53 @@ document.addEventListener("DOMContentLoaded", () => {
           });
   });
 
-  // === 5. وظائف إدارة المصادقة الإضافية ===
+  // === 5. وظائف إدارة المصادقة الإضافية (تسجيل الخروج/كلمة السر) ===
 
   // أ. تسجيل الخروج
-  btnLogout.addEventListener("click", () => {
-      auth.signOut().then(() => {
-          alert("تم تسجيل الخروج بنجاح.");
-      }).catch((error) => {
-          console.error("Logout Error:", error);
-      });
-  });
+  if (btnLogout) {
+    btnLogout.addEventListener("click", () => {
+        auth.signOut().then(() => {
+            alert("تم تسجيل الخروج بنجاح.");
+        }).catch((error) => {
+            console.error("Logout Error:", error);
+        });
+    });
+  }
 
   // ب. نسيت كلمة السر
-  forgotPasswordLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      const email = emailInput.value.trim();
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        const email = emailInput.value.trim();
 
-      if (!email) {
-          alert("الرجاء إدخال البريد الإلكتروني أولاً في حقل تسجيل الدخول.");
-          return;
-      }
+        if (!email) {
+            alert("الرجاء إدخال البريد الإلكتروني أولاً في حقل تسجيل الدخول.");
+            return;
+        }
 
-      auth.sendPasswordResetEmail(email)
-          .then(() => {
-              alert(`تم إرسال رابط إعادة تعيين كلمة السر إلى بريد ${email}.`);
-          })
-          .catch((error) => {
-              console.error("Forgot Password Error:", error);
-              alert("حدث خطأ. تأكد من أن البريد الإلكتروني صحيح ومسجل.");
-          });
-  });
+        auth.sendPasswordResetEmail(email)
+            .then(() => {
+                alert(`تم إرسال رابط إعادة تعيين كلمة السر إلى بريد ${email}.`);
+            })
+            .catch((error) => {
+                console.error("Forgot Password Error:", error);
+                alert("حدث خطأ. تأكد من أن البريد الإلكتروني صحيح ومسجل.");
+            });
+    });
+  }
 
   // ج. تغيير كلمة السر (توجيه)
-  changePasswordLink.addEventListener("click", (e) => {
-      e.preventDefault();
-      alert("لتغيير كلمة السر، يرجى تسجيل الخروج ثم استخدام خيار 'هل نسيت كلمة السر؟' في صفحة تسجيل الدخول.");
-  });
+  if (changePasswordLink) {
+    changePasswordLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        alert("لتغيير كلمة السر، يرجى تسجيل الخروج ثم استخدام خيار 'هل نسيت كلمة السر؟' في صفحة تسجيل الدخول.");
+    });
+  }
 
-  // === 6. Ajouter un rendez-vous ===
+  // === 6. Ajouter un rendez-vous (يتطلب تسجيل الدخول) ===
   btnAdd.addEventListener("click", () => {
-    if (!auth.currentUser) { alert("يجب تسجيل الدخول أولاً."); return; }
+    // التحقق من تسجيل الدخول باستخدام Firebase Auth
+    if (!auth.currentUser) { alert("يجب تسجيل الدخول أولاً لإضافة موعد."); return; }
 
     const nom = nomAdd.value.trim();
     const tel = telAdd.value.trim();
@@ -166,70 +176,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const ref = db.ref("rendezvous");
     ref.once("value").then(snapshot => {
-      const numero = snapshot.numChildren() + 1;
-      ref.push({
-        nom,
-        tel,
-        numero,
-        date: new Date().toLocaleDateString("fr-FR"),
-        checked: false
-      });
-      nomAdd.value = "";
-      telAdd.value = "";
-    });
-  });
-
-  // === 7. Afficher les rendez-vous ===
-  function afficherRendezVous() {
-    const ref = db.ref("rendezvous");
-    ref.on("value", snapshot => {
-      rdvTable.innerHTML = "";
-      let remaining = 0;
-
-      snapshot.forEach(child => {
-        const data = child.val();
-        if (!data.checked) remaining++;
-
-        const tr = document.createElement("tr");
-        tr.style.background = data.checked ? "#f28b82" : "white";
-
-        tr.innerHTML = `
-          <td>${data.numero}</td>
-          <td>${data.nom}</td>
-          <td>${data.tel}</td>
-          <td>${data.date}</td>
-          <td>
-            <button class="btn-check" data-id="${child.key}" style="background:green; color:white; margin-right:5px;">
-              ✅
-            </button>
-            <button class="btn-delete" data-id="${child.key}" style="background:red; color:white;">🗑️</button>
-          </td>
-        `;
-        rdvTable.appendChild(tr);
-      });
-
-      remainingSpan.textContent = remaining;
-
-      // === Bouton toggle "tem découverte" ===
-      document.querySelectorAll(".btn-check").forEach(btn => {
-        btn.addEventListener("click", e => {
-          const id = e.currentTarget.getAttribute("data-id");
-          const refPatient = db.ref("rendezvous/" + id);
-
-          refPatient.once("value").then(snap => {
-            const current = snap.val().checked;
-            refPatient.update({ checked: !current }); 
-          });
-        });
-      });
-
-      // === Bouton supprimer ===
-      document.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.addEventListener("click", e => {
-          const id = e.currentTarget.getAttribute("data-id");
-          db.ref("rendezvous/" + id).remove();
-        });
-      });
-    });
-  }
-});
+      const numero = snapshot.numChildren() + 1
