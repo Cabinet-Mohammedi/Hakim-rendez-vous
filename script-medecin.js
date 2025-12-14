@@ -1,16 +1,22 @@
-document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", () => {
   // === Sélection des éléments HTML ===
   const btnLogin = document.getElementById("btnLogin");
   
-  // *** يجب التأكد من وجود هذه العناصر في ملف HTML الخاص بك ***
-  const emailInput = document.getElementById("emailMedecin"); // حقل إدخال البريد الإلكتروني
-  const mdpInput = document.getElementById("mdpMedecin");       // حقل إدخال كلمة المرور
-  // --------------------------------------------------------
+  // عناصر المصادقة الجديدة والقديمة
+  const emailInput = document.getElementById("emailMedecin");
+  const mdpInput = document.getElementById("mdpMedecin");
+  const loginError = document.getElementById("loginError");
   
+  // الروابط الجديدة
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  const changePasswordLink = document.getElementById("changePasswordLink");
+  const btnLogout = document.getElementById("btnLogout"); // زر تسجيل الخروج (مضاف في medecin.html)
+
+  // العناصر المرئية
   const loginCard = document.getElementById("loginCard");
   const medContent = document.getElementById("medContent");
-  const loginError = document.getElementById("loginError");
 
+  // عناصر إدارة المواعيد
   const nomAdd = document.getElementById("nomAdd");
   const telAdd = document.getElementById("telAdd");
   const btnAdd = document.getElementById("btnAdd");
@@ -18,16 +24,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const remainingSpan = document.getElementById("remaining");
 
   // === Initialisation Firebase ===
-  // *** تأكد من أن firebaseConfig صحيح ومحدث ***
+  // تأكد أن firebase-config.js يحتوي على التكوين الصحيح (firebaseConfig)
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth(); // جلب خدمة المصادقة
 
-  // === 1. التحقق من حالة المصادقة عند تحميل الصفحة ===
-  // هذا يحدد ما إذا كان يجب عرض شاشة تسجيل الدخول أو المحتوى
+  // === 1. التحقق من حالة المصادقة عند تحميل الصفحة (التحقق الآمن) ===
+  // يتم التحقق من حالة تسجيل الدخول عبر Firebase Auth بدلاً من localStorage
   auth.onAuthStateChanged((user) => {
     if (user) {
-      // المستخدم مسجل الدخول بنجاح
+      // المستخدم مسجل الدخول
       loginCard.style.display = "none";
       medContent.style.display = "block";
       afficherRendezVous();
@@ -35,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // المستخدم غير مسجل الدخول
       loginCard.style.display = "block";
       medContent.style.display = "none";
+      rdvTable.innerHTML = ""; // مسح الجدول عند تسجيل الخروج
     }
   });
 
@@ -48,14 +55,13 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // استخدام وظيفة Firebase للمصادقة الآمنة (لا توجد كلمة مرور في الكود)
+    // *** لا توجد كلمة سر مكتوبة بشكل صريح في الكود الآن ***
     auth.signInWithEmailAndPassword(email, password)
       .then((userCredential) => {
-        // تسجيل الدخول ناجح. onAuthStateChanged يتولى التبديل
         loginError.textContent = ""; 
+        // auth.onAuthStateChanged يتولى مهمة عرض المحتوى
       })
       .catch((error) => {
-        // فشل تسجيل الدخول
         console.error("Login Error:", error.code, error.message);
         
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -66,8 +72,55 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 
-  // === 3. Ajouter un rendez-vous ===
+  // === 3. وظائف إدارة المصادقة الإضافية ===
+
+  // أ. تسجيل الخروج
+  if (btnLogout) {
+    btnLogout.addEventListener("click", () => {
+        auth.signOut().then(() => {
+            alert("تم تسجيل الخروج بنجاح.");
+            // auth.onAuthStateChanged يتولى التبديل
+        }).catch((error) => {
+            console.error("Logout Error:", error);
+        });
+    });
+  }
+
+  // ب. نسيت كلمة السر (إرسال رابط إعادة تعيين)
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        const email = emailInput.value.trim();
+
+        if (!email) {
+            alert("الرجاء إدخال البريد الإلكتروني في حقل الإدخال أعلاه أولاً.");
+            return;
+        }
+
+        auth.sendPasswordResetEmail(email)
+            .then(() => {
+                alert(`تم إرسال رابط إعادة تعيين كلمة السر إلى بريد ${email}.`);
+            })
+            .catch((error) => {
+                console.error("Forgot Password Error:", error);
+                alert("حدث خطأ. تأكد من أن البريد الإلكتروني صحيح ومسجل.");
+            });
+    });
+  }
+
+  // ج. تغيير كلمة السر (توجيه المستخدم)
+  if (changePasswordLink) {
+    changePasswordLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        alert("لتغيير كلمة السر، يرجى تسجيل الخروج ثم استخدام خيار 'هل نسيت كلمة السر؟' في صفحة تسجيل الدخول.");
+    });
+  }
+
+  // === 4. Ajouter un rendez-vous ===
   btnAdd.addEventListener("click", () => {
+    // يجب التحقق من تسجيل الدخول قبل إضافة البيانات
+    if (!auth.currentUser) { alert("يجب تسجيل الدخول أولاً."); return; }
+
     const nom = nomAdd.value.trim();
     const tel = telAdd.value.trim();
 
@@ -88,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // === 4. Afficher les rendez-vous ===
+  // === 5. Afficher les rendez-vous ===
   function afficherRendezVous() {
     const ref = db.ref("rendezvous");
     ref.on("value", snapshot => {
