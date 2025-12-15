@@ -1,42 +1,34 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // === Sélection des éléments HTML ===
   
-  // عناصر تسجيل الدخول (Login)
   const btnLogin = document.getElementById("btnLogin");
   const emailInput = document.getElementById("emailMedecin");
   const mdpInput = document.getElementById("mdpMedecin");
   const loginCard = document.getElementById("loginCard");
   const loginError = document.getElementById("loginError");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
-  // const changePasswordLink = document.getElementById("changePasswordLink"); // تم إزالتها لتجنب الأخطاء
 
-  // العناصر العامة
   const medContent = document.getElementById("medContent");
   const btnLogout = document.getElementById("btnLogout");
   
-  // عناصر إدارة المواعيد
   const nomAdd = document.getElementById("nomAdd");
   const telAdd = document.getElementById("telAdd");
   const btnAdd = document.getElementById("btnAdd");
   const rdvTableBody = document.getElementById("rdvTable") ? document.getElementById("rdvTable").querySelector("tbody") : null;
   const remainingSpan = document.getElementById("remaining");
 
-  // === Initialisation Firebase ===
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth(); 
 
-  // === 1. التحقق من حالة المصادقة عند تحميل الصفحة (Firebase Auth) ===
   auth.onAuthStateChanged((user) => {
-    // التحقق من وجود العناصر قبل محاولة الوصول إلى خاصية style (خطأ السطر 51)
+
     if (loginCard && medContent) {
         if (user) {
-            // المستخدم مسجل الدخول
+
             loginCard.style.display = "none";
             medContent.style.display = "block";
             afficherRendezVous();
         } else {
-            // المستخدم غير مسجل الدخول
             loginCard.style.display = "block";
             medContent.style.display = "none";
             if (rdvTableBody) {
@@ -46,14 +38,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // === 2. Connexion médecin (تسجيل الدخول الآمن) ===
-  if (btnLogin) { // فحص أمان للزر
+  if (btnLogin) { 
       btnLogin.addEventListener("click", () => {
           const email = emailInput.value.trim();
           const password = mdpInput.value.trim();
 
           if (!email || !password) {
-              loginError.textContent = "الرجاء إدخال البريد الإلكتروني وكلمة المرور.";
+              loginError.textContent = "Veuillez entrer l'adresse e-mail et le mot de passe";
               return;
           }
 
@@ -65,54 +56,52 @@ document.addEventListener("DOMContentLoaded", () => {
               console.error("Login Error:", error.code, error.message);
               
               if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                   loginError.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+                   loginError.textContent = "L'email ou le mot de passe est incorrect";
               } else {
-                   loginError.textContent = "حدث خطأ أثناء تسجيل الدخول. حاول مجددًا.";
+                   loginError.textContent = "Une erreur s'est produite lors de la connexion. Veuillez réessayer.";
               }
             });
-      }); // نهاية btnLogin.addEventListener
+      }); 
   }
 
-  // === 3. وظائف إدارة المصادقة الإضافية (تسجيل الخروج/كلمة السر) ===
+  // 
 
-  // أ. تسجيل الخروج
   if (btnLogout) {
     btnLogout.addEventListener("click", () => {
         auth.signOut().then(() => {
-            alert("تم تسجيل الخروج بنجاح.");
+            alert("Déconnexion réussie");
         }).catch((error) => {
             console.error("Logout Error:", error);
         });
     });
   }
 
-  // ب. نسيت كلمة السر
-  if (forgotPasswordLink) { // فحص أمان للرابط (خطأ السطر 88 المحتمل)
+  if (forgotPasswordLink) { 
     forgotPasswordLink.addEventListener("click", (e) => {
         e.preventDefault();
-        // نستخدم حقل إدخال البريد الإلكتروني لتحديد البريد
+
         const email = emailInput ? emailInput.value.trim() : ''; 
 
         if (!email) {
-            alert("الرجاء إدخال البريد الإلكتروني أولاً في حقل تسجيل الدخول.");
+            alert("Veuillez d'abord saisir l'adresse e-mail dans le champ de connexion");
             return;
         }
 
         auth.sendPasswordResetEmail(email)
             .then(() => {
-                alert(`تم إرسال رابط إعادة تعيين كلمة السر إلى بريد ${email}.`);
+                alert(`Un lien de réinitialisation de mot de passe a été envoyé à l'e-mail ${email}.`);
             })
             .catch((error) => {
                 console.error("Forgot Password Error:", error);
-                alert("حدث خطأ. تأكد من أن البريد الإلكتروني صحيح ومسجل.");
+                alert("Une erreur s'est produite. Assurez-vous que l'e-mail est correct et enregistré.");
             });
     });
   }
 
-  // === 4. Ajouter un rendez-vous (يتطلب تسجيل الدخول) ===
+
   if (btnAdd) {
     btnAdd.addEventListener("click", () => {
-      if (!auth.currentUser) { alert("يجب تسجيل الدخول أولاً لإضافة موعد."); return; }
+      if (!auth.currentUser) { alert("Vous devez vous connecter d'abord pour ajouter un rendez-vous."); return; }
 
       const nom = nomAdd.value.trim();
       const tel = telAdd.value.trim();
@@ -137,15 +126,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // === 5. Afficher les rendez-vous ===
   function afficherRendezVous() {
-    if (!rdvTableBody) return; // فحص أمان للجدول
+    if (!rdvTableBody) return; 
 
     const ref = db.ref("rendezvous");
     ref.on("value", snapshot => {
       rdvTableBody.innerHTML = "";
       let remaining = 0;
 
-      // ... (باقي منطق عرض البيانات والأزرار)
-
+    
       snapshot.forEach(child => {
         const data = child.val();
         if (!data.checked) remaining++;
@@ -195,3 +183,4 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
