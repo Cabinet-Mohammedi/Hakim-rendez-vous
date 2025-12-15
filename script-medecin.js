@@ -1,74 +1,59 @@
 document.addEventListener("DOMContentLoaded", () => {
   // === Sélection des éléments HTML ===
   
+  // عناصر تسجيل الدخول (Login)
   const btnLogin = document.getElementById("btnLogin");
   const emailInput = document.getElementById("emailMedecin");
   const mdpInput = document.getElementById("mdpMedecin");
   const loginCard = document.getElementById("loginCard");
   const loginError = document.getElementById("loginError");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
-  const changePasswordLink = document.getElementById("changePasswordLink");
-  
-  const signupCard = document.getElementById("signupCard");
-  const newEmailInput = document.getElementById("newEmail");
-  const newPasswordInput = document.getElementById("newPassword");
-  const btnSignup = document.getElementById("btnSignup");
-  const signupError = document.getElementById("signupError");
-  const showSignupBtn = document.getElementById("showSignupBtn");
-  const showLoginBtn = document.getElementById("showLoginBtn");
+  // تم حذف changePasswordLink لأنه لم يكن مستخدماً في الروابط الأخيرة
 
+  // تم حذف عناصر تسجيل الاشتراك (Signup) بالكامل
+  
+  // العناصر العامة
   const medContent = document.getElementById("medContent");
   const btnLogout = document.getElementById("btnLogout");
   
+  // عناصر إدارة المواعيد
   const nomAdd = document.getElementById("nomAdd");
   const telAdd = document.getElementById("telAdd");
   const btnAdd = document.getElementById("btnAdd");
   const rdvTable = document.getElementById("rdvTable").querySelector("tbody");
   const remainingSpan = document.getElementById("remaining");
 
+  // === Initialisation Firebase ===
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
   const auth = firebase.auth(); 
 
-  if (showSignupBtn && showLoginBtn) {
-    showSignupBtn.addEventListener("click", () => {
-        loginCard.style.display = "none";
-        signupCard.style.display = "block";
-        loginError.textContent = "";
-    });
-
-    showLoginBtn.addEventListener("click", () => {
-        signupCard.style.display = "none";
-        loginCard.style.display = "block";
-        signupError.textContent = "";
-    });
-  }
-
+  // === 1. وظائف التبديل بين الشاشات (تم حذفها لأنها لم تعد موجودة) ===
+  
+  // === 2. التحقق من حالة المصادقة عند تحميل الصفحة (Firebase Auth) ===
   auth.onAuthStateChanged((user) => {
     if (user) {
- 
+      // المستخدم مسجل الدخول
       loginCard.style.display = "none";
-      signupCard.style.display = "none";
       medContent.style.display = "block";
       afficherRendezVous();
     } else {
-
+      // المستخدم غير مسجل الدخول
       loginCard.style.display = "block";
-      signupCard.style.display = "none";
       medContent.style.display = "none";
       rdvTable.innerHTML = "";
     }
   });
 
+  // === 3. Connexion médecin (تسجيل الدخول الآمن) ===
   btnLogin.addEventListener("click", () => {
     const email = emailInput.value.trim();
     const password = mdpInput.value.trim();
 
     if (!email || !password) {
-        loginError.textContent = "Veuillez entrer l'adresse e-mail et le mot de passe.";
+        loginError.textContent = "الرجاء إدخال البريد الإلكتروني وكلمة المرور.";
         return;
     }
-
 
     auth.signInWithEmailAndPassword(email, password)
       .then((userCredential) => {
@@ -78,80 +63,61 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Login Error:", error.code, error.message);
         
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-             loginError.textContent = "L'e-mail ou le mot de passe est incorrect";
+             loginError.textContent = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
         } else {
-             loginError.textContent = "Une erreur s'est produite lors de la connexion. Veuillez réessayer.";
+             loginError.textContent = "حدث خطأ أثناء تسجيل الدخول. حاول مجددًا.";
         }
       });
   });
 
-  btnSignup.addEventListener("click", () => {
-      const email = newEmailInput.value.trim();
-      const password = newPasswordInput.value.trim();
+  // === 4. تسجيل طبيب جديد (تم حذف هذه الدالة بالكامل) ===
 
-      if (!email || password.length < 6) {
-          signupError.textContent = "Vous devez entrer un e-mail et un mot de passe d'au moins 6 caractères";
-          return;
-      }
+  // === 5. وظائف إدارة المصادقة الإضافية (تسجيل الخروج/كلمة السر) ===
 
-      auth.createUserWithEmailAndPassword(email, password)
-          .then((userCredential) => {
-              signupError.textContent = "Le compte a été créé avec succès ! Vous pouvez maintenant vous connecter.";
-              newEmailInput.value = "";
-              newPasswordInput.value = "";
-              showLoginBtn.click(); 
-          })
-          .catch((error) => {
-              console.error("Signup Error:", error.code, error.message);
-              if (error.code === 'auth/email-already-in-use') {
-                  signupError.textContent = "Cet e-mail est déjà utilisé";
-              } else {
-                  signupError.textContent = "Une erreur s'est produite lors de la création du compte. Veuillez réessayer.";
-              }
-          });
-  });
-
-
+  // أ. تسجيل الخروج
   if (btnLogout) {
     btnLogout.addEventListener("click", () => {
         auth.signOut().then(() => {
-            alert("Déconnexion réussie");
+            alert("تم تسجيل الخروج بنجاح.");
         }).catch((error) => {
             console.error("Logout Error:", error);
         });
     });
   }
 
+  // ب. نسيت كلمة السر
   if (forgotPasswordLink) {
     forgotPasswordLink.addEventListener("click", (e) => {
         e.preventDefault();
         const email = emailInput.value.trim();
 
         if (!email) {
-            alert("Veuillez d'abord saisir l'adresse e-mail dans le champ de connexion");
+            alert("الرجاء إدخال البريد الإلكتروني أولاً في حقل تسجيل الدخول.");
             return;
         }
 
         auth.sendPasswordResetEmail(email)
             .then(() => {
-                alert(`Un lien de réinitialisation de mot de passe a été envoyé à l'e-mail ${email}.`);
+                alert(`تم إرسال رابط إعادة تعيين كلمة السر إلى بريد ${email}.`);
             })
             .catch((error) => {
                 console.error("Forgot Password Error:", error);
-                alert("Une erreur s'est produite. Assurez-vous que l'e-mail est correct et enregistré.");
+                alert("حدث خطأ. تأكد من أن البريد الإلكتروني صحيح ومسجل.");
             });
     });
   }
 
-  if (changePasswordLink) {
+  // ج. تغيير كلمة السر (لم تعد ضرورية بعد إزالة الرابط)
+  /* if (changePasswordLink) {
     changePasswordLink.addEventListener("click", (e) => {
         e.preventDefault();
-        alert("Pour changer le mot de passe, veuillez vous déconnecter puis utiliser l'option 'Mot de passe oublié ?' sur la page de connexion.");
+        alert("لتغيير كلمة السر، يرجى تسجيل الخروج ثم استخدام خيار 'هل نسيت كلمة السر؟' في صفحة تسجيل الدخول.");
     });
-  }
+  } */
 
+  // === 6. Ajouter un rendez-vous (يتطلب تسجيل الدخول) ===
   btnAdd.addEventListener("click", () => {
-    if (!auth.currentUser) { alert("Vous devez vous connecter d'abord pour ajouter un rendez-vous."); return; }
+    if (!auth.currentUser) { alert("يجب تسجيل الدخول أولاً لإضافة موعد."); return; }
 
     const nom = nomAdd.value.trim();
     const tel = telAdd.value.trim();
@@ -227,4 +193,3 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
